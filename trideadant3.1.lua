@@ -13,7 +13,10 @@ for _, c in ipairs(workspace:GetChildren()) do
     end
 end
 local ign = workspace:FindFirstChild("Ignore")
+local tW = tick()
+while not ign and tick() - tW < 30 do task.wait(0.5) ign = workspace:FindFirstChild("Ignore") end
 if ign then
+    print("Ignore ENCONTRADO con", #ign:GetChildren(), "hijos")
     print("--- hijos de Ignore (40) ---")
     local n = 0
     for _, m in ipairs(ign:GetChildren()) do
