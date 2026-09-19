@@ -1,31 +1,27 @@
--- TRIDENT_RECON5: contenido de Const/Ignore. YA JUGANDO, cerca de otros.
-local Const = workspace:FindFirstChild("Const")
-print("Const:", Const and "SI" or "NO")
-if Const then
-    print("--- hijos de Const ---")
-    for _, c in ipairs(Const:GetChildren()) do
-        print("c:", c.Name, "|", c.ClassName, "| hijos:", #c:GetChildren())
-    end
-end
-local ign = Const and Const:FindFirstChild("Ignore")
-print("Ignore:", ign and ("SI con " .. #ign:GetChildren() .. " hijos") or "NO")
-if ign then
-    print("--- hijos de Ignore (50) ---")
-    local n = 0
-    for _, m in ipairs(ign:GetChildren()) do
-        n = n + 1
-        if n <= 50 then
-            local np, names = 0, {}
-            if m:IsA("Model") then
-                for _, d in ipairs(m:GetDescendants()) do
-                    if d:IsA("BasePart") then
-                        np = np + 1
-                        if #names < 8 then names[#names + 1] = d.Name end
-                    end
+-- TRIDENT_RECON6: que distingue un cuerpo de otro. YA JUGANDO, con otros cerca.
+local ign = workspace:FindFirstChild("Const")
+ign = ign and ign:FindFirstChild("Ignore")
+print("Ignore:", ign and "SI" or "NO")
+if not ign then print("FIN RECON6") return end
+for _, m in ipairs(ign:GetChildren()) do
+    if m:IsA("Model") then
+        local np = 0
+        for _, d in ipairs(m:GetDescendants()) do
+            if d:IsA("BasePart") then np = np + 1 end
+        end
+        if np >= 6 then
+            print("=== BODY:", m.Name, "| partes:", np, "===")
+            local okA, at = pcall(function() return m:GetAttributes() end)
+            if okA then
+                for k, v in pairs(at) do print("  attr:", k, "=", tostring(v)) end
+            end
+            for _, d in ipairs(m:GetChildren()) do
+                if not d:IsA("BasePart") then
+                    print("  extra:", d.Name, "|", d.ClassName, "| valor:",
+                        (d:IsA("StringValue") or d:IsA("IntValue") or d:IsA("NumberValue") or d:IsA("BoolValue") or d:IsA("ObjectValue")) and tostring(d.Value) or "-")
                 end
             end
-            print(n .. ".", m.Name, "|", m.ClassName, "| partes:", np, "| ej:", table.concat(names, ","))
         end
     end
 end
-print("FIN RECON5")
+print("FIN RECON6")
