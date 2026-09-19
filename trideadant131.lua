@@ -37,16 +37,45 @@ local settings = {
 -- Se excluyen los propios (FPSArms, LocalCharacter) por nombre.
 local SELF_NAMES = {FPSArms = true, LocalCharacter = true, HLPart = true}
 local bodyCache, bodyCacheTime = {}, 0
+local bodyLabels = {}
 local function refreshBodies()
     bodyCache = {}
+    bodyLabels = {}
+    local nameset = {}
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= localPlayer then
+            nameset[p.Name] = true
+            if p.DisplayName and p.DisplayName ~= "" then nameset[p.DisplayName] = true end
+        end
+    end
     local seen = 0
-    for _, m in ipairs(workspace:GetDescendants()) do
-        if m:IsA("Model") and m.Name == "Model" then
-            seen = seen + 1
-            if seen > 200 then break end
-            if isBody(m) then
-                bodyCache[#bodyCache + 1] = m
-                if #bodyCache >= 40 then break end
+    for _, d in ipairs(workspace:GetDescendants()) do
+        local cls = d.ClassName
+        if cls == "Model" then
+            if seen < 1200 then
+                seen = seen + 1
+                if #bodyCache < 40 and isBody(d) then
+                    bodyCache[#bodyCache + 1] = d
+                end
+            end
+        elseif cls == "TextLabel" or cls == "TextButton" then
+            local who = nil
+            pcall(function() who = d.Text end)
+            if who and who ~= "" and nameset[who] then
+                local m, ups = d, 0
+                while m and not m:IsA("Model") and ups < 8 do m = m.Parent ups = ups + 1 end
+                if m and m:IsA("Model") and not SELF_NAMES[m.Name] then
+                    local np = 0
+                    for _, q in ipairs(m:GetDescendants()) do
+                        if q:IsA("BasePart") then np = np + 1 if np >= 4 then break end end
+                    end
+                    if np >= 4 then
+                        bodyLabels[m] = who
+                        local dup = false
+                        for _, b in ipairs(bodyCache) do if b == m then dup = true break end end
+                        if not dup and #bodyCache < 40 then bodyCache[#bodyCache + 1] = m end
+                    end
+                end
             end
         end
     end
@@ -695,7 +724,7 @@ TCONN(RunService.RenderStepped:Connect(function(dt)
         if settings.espEnabled then
             local targets = {}
             for _, m in ipairs(collectBodies()) do
-                targets[#targets + 1] = {key = m, char = m, label = "Jugador"}
+                targets[#targets + 1] = {key = m, char = m, label = bodyLabels[m] or "Jugador"}
             end
             for i, t in ipairs(targets) do
                 if (i + espFrame) % 2 == 0 then
@@ -753,7 +782,7 @@ TCONN(RunService.RenderStepped:Connect(function(dt)
                 end
                 if myP then
                     for _, m in ipairs(collectBodies()) do
-                        consider(m, "Jugador")
+                        consider(m, bodyLabels[m] or "Jugador")
                     end
                 end
                 if bestPart then
