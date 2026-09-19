@@ -36,36 +36,43 @@ local settings = {
 -- sin Character. Regla de cuerpo: Model con 6+ piezas + Head + Torso.
 -- Se excluyen los propios (FPSArms, LocalCharacter) por nombre.
 local SELF_NAMES = {FPSArms = true, LocalCharacter = true, HLPart = true}
-local bodyFolderCache, bodyFolderTime = nil, 0
-local bodyMissStreak = 0
-local function findBodyFolder()
-    local now = tick()
-    local interval = bodyMissStreak > 3 and 30 or 5
-    if bodyFolderCache and bodyFolderCache.Parent and now - bodyFolderTime < interval then
-        return bodyFolderCache
+local bodyCache, bodyCacheTime = {}, 0
+local function refreshBodies()
+    bodyCache = {}
+    local seen = 0
+    for _, m in ipairs(workspace:GetDescendants()) do
+        if m:IsA("Model") and m.Name == "Model" then
+            seen = seen + 1
+            if seen > 200 then break end
+            if isBody(m) then
+                bodyCache[#bodyCache + 1] = m
+                if #bodyCache >= 40 then break end
+            end
+        end
     end
-    bodyFolderCache = nil
+    -- respaldo: carpeta Ignore si existe
     local c = workspace:FindFirstChild("Const")
     local ig = c and c:FindFirstChild("Ignore")
-    if not ig then
-        ig = workspace:FindFirstChild("Ignore", true)
+    if not ig then ig = workspace:FindFirstChild("Ignore", true) end
+    if ig then
+        for _, m in ipairs(ig:GetChildren()) do
+            if isBody(m) then
+                local dup = false
+                for _, b in ipairs(bodyCache) do if b == m then dup = true break end end
+                if not dup then bodyCache[#bodyCache + 1] = m end
+            end
+        end
     end
-    if ig then bodyMissStreak = 0 else bodyMissStreak = bodyMissStreak + 1 end
-    bodyFolderCache = ig
-    bodyFolderTime = now
-    return ig
 end
 local function collectBodies()
-    local out = {}
-    local folder = findBodyFolder()
-    local pool = {}
-    if folder then
-        for _, m in ipairs(folder:GetChildren()) do pool[#pool + 1] = m end
-    else
-        for _, m in ipairs(workspace:GetChildren()) do pool[#pool + 1] = m end
+    local now = tick()
+    if now - bodyCacheTime > 3 then
+        refreshBodies()
+        bodyCacheTime = now
     end
-    for _, m in ipairs(pool) do
-        if isBody(m) then out[#out + 1] = m end
+    local out = {}
+    for _, m in ipairs(bodyCache) do
+        if m and m.Parent then out[#out + 1] = m end
     end
     return out
 end
