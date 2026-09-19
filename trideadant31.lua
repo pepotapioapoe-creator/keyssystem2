@@ -47,20 +47,25 @@ else
         if not root then return end
         local old = _G.__SPY_SNAP.trees[name] or {}
         for _, d in ipairs(root:GetDescendants()) do
-            if shown >= 60 then return end
-            local key = d.ClassName .. "|" .. fullPath(d)
-            if not old[key] then
-                shown = shown + 1
-                local extra = ""
-                if d:IsA("BillboardGui") then
-                    extra = " adornee=" .. (d.Adornee and fullPath(d.Adornee) or "nil")
-                elseif d:IsA("TextLabel") or d:IsA("TextButton") then
-                    local okT, txt = pcall(function() return d.Text end)
-                    extra = " text=" .. (okT and tostring(txt):sub(1, 40) or "?")
-                elseif d:IsA("Frame") then
-                    extra = " size=" .. tostring(d.Size) .. " rot=" .. tostring(d.Rotation)
+            if shown >= 80 then return end
+            local fp = fullPath(d)
+            if fp:find("HUI/Obsidian") then
+                -- menu del otro hub, ya conocido: se saltea
+            else
+                local key = d.ClassName .. "|" .. fp
+                if not old[key] then
+                    shown = shown + 1
+                    local extra = ""
+                    if d:IsA("BillboardGui") then
+                        extra = " adornee=" .. (d.Adornee and fullPath(d.Adornee) or "nil")
+                    elseif d:IsA("TextLabel") or d:IsA("TextButton") then
+                        local okT, txt = pcall(function() return d.Text end)
+                        extra = " text=" .. (okT and tostring(txt):sub(1, 40) or "?")
+                    elseif d:IsA("Frame") then
+                        extra = " size=" .. tostring(d.Size) .. " rot=" .. tostring(d.Rotation)
+                    end
+                    print(shown .. ". [" .. name .. "] " .. d.ClassName .. " " .. fp .. extra)
                 end
-                print(shown .. ". [" .. name .. "] " .. d.ClassName .. " " .. fullPath(d) .. extra)
             end
         end
     end
