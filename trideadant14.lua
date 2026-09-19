@@ -69,11 +69,14 @@ local function collectBodies()
     end
     return out
 end
+local function findPart(char, name)
+    return char:FindFirstChild(name) or char:FindFirstChild(name, true)
+end
 local function isBody(m)
     if not m or not m:IsA("Model") then return false end
     if SELF_NAMES[m.Name] then return false end
-    if not m:FindFirstChild("Head") then return false end
-    if not m:FindFirstChild("Torso") then return false end
+    if not findPart(m, "Head") then return false end
+    if not findPart(m, "Torso") then return false end
     local np = 0
     for _, d in ipairs(m:GetDescendants()) do
         if d:IsA("BasePart") then np = np + 1 if np >= 6 then break end end
@@ -81,8 +84,8 @@ local function isBody(m)
     return np >= 6
 end
 local function bodyAnchor(char)
-    return char:FindFirstChild("Torso") or char:FindFirstChild("Head")
-        or char:FindFirstChildWhichIsA("BasePart")
+    return findPart(char, "Torso") or findPart(char, "Head")
+        or char:FindFirstChildWhichIsA("BasePart", true)
 end
 local function ownPos()
     local r = myRoot()
@@ -572,7 +575,7 @@ local function updateESP(key, char, label)
         else objs.line.Visible = false end
     else objs.line.Visible = false end
     if settings.espBox then
-        local head = char:FindFirstChild("Head")
+        local head = findPart(char, "Head")
         local _, on = camera:WorldToViewportPoint(root.Position)
         if on then
             local top3d = head and (head.Position + Vector3.new(0, 0.6, 0)) or (root.Position + Vector3.new(0, 2.5, 0))
@@ -588,8 +591,8 @@ local function updateESP(key, char, label)
     else objs.box.Visible = false end
     if settings.skeleton then
         local pm = {}
-        for _, c in ipairs(char:GetChildren()) do
-            if c:IsA("BasePart") then pm[c.Name] = c end
+        for _, c in ipairs(char:GetDescendants()) do
+            if c:IsA("BasePart") and pm[c.Name] == nil then pm[c.Name] = c end
         end
         local segs, dots = {}, {}
         local function dotP(p)
@@ -728,8 +731,8 @@ TCONN(RunService.RenderStepped:Connect(function(dt)
                 local function consider(model, label)
                     if not model or not model.Parent then return end
                     cAlive = cAlive + 1
-                    local tp = model:FindFirstChild(settings.targetPart)
-                        or model:FindFirstChild("Head") or model:FindFirstChild("Torso")
+                    local tp = findPart(model, settings.targetPart)
+                        or findPart(model, "Head") or findPart(model, "Torso")
                     if not tp then return end
                     local dp = (myP - tp.Position).Magnitude
                     if dp < 5 or dp > settings.maxDistance then return end
